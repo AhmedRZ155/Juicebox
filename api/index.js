@@ -24,13 +24,14 @@ apiRouter.use(async (req, res, next) => {
         req.user = await getUserById(id);
         next();
       }
-    } catch ({ name, message }) {
-      next({ name, message });
+    } catch (error) {
+      next({ name: error.name, message: error.message, status: 401 });
     }
   } else {
     next({
       name: 'AuthorizationHeaderError',
-      message: `Authorization token must start with ${ prefix }`
+      message: `Authorization token must start with ${ prefix }`,
+      status: 401
     });
   }
 });
@@ -48,10 +49,8 @@ apiRouter.use('/posts', postsRouter);
 apiRouter.use('/tags', tagsRouter);
 
 apiRouter.use((error, req, res, next) => {
-    res.send({
-      name: error.name,
-      message: error.message
-    });
-  });
+  const status = error.status || 500;
+  res.status(status).json({ name: error.name, message: error.message });
+});
 
 module.exports = apiRouter;

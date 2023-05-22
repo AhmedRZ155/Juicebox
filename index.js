@@ -16,7 +16,21 @@ server.use((req, res, next) => {
   next();
 });
 
+server.use((error, req, res, next) => {
+  console.error(error);
+  res.status(error.status || 500).send(error.message || "Internal server error.");
+});
+
+
 server.use('/api', apiRouter);
+
+server.get('/background/:color', (req, res, next) => {
+  res.send(`
+    <body style="background: ${ req.params.color };">
+      <h1>Hello World</h1>
+    </body>
+  `);
+});
 
 
 server.listen(PORT, () => {

@@ -1,11 +1,34 @@
 // api/users.js
 const express = require('express');
 const usersRouter = express.Router();
-const { getAllUsers } = require('../db');
-const { getUserByUsername } = require('../db');
-const { createUser } = require('../db');
+const { getAllUsers, getUserByUsername, createUser, getUserById, updateUser  } = require('../db');
 const jwt = require('jsonwebtoken');
+const bycrypt = require('bcrypt');
 require('dotenv').config();
+
+function requireActiveUser(req, res, next) {
+  if (!req.user || !req.user.active) {
+    next({
+      name: 'MissingActiveUserError',
+      message: 'You must be logged in as an active user to perform this action'
+    });
+  }
+
+  next();
+}
+
+function requireUser(req, res, next) {
+  if (!req.user) {
+    next({
+      name: "MissingUserError",
+      message: "You must be logged in to perform this action"
+    });
+  }
+  
+  next();
+}
+
+
 
 usersRouter.use((req, res, next) => {
   console.log("A request is being made to /users");
@@ -35,7 +58,7 @@ usersRouter.get('/', async (req, res) => {
     try {
       const user = await getUserByUsername(username);
   
-      if (user && user.password == password) {
+      if (user && await bcrypt.compare(password, user.password)) {
         // create token & return to user
         const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET);
         res.send({ message: "you're logged in!", token: token });
@@ -86,5 +109,54 @@ usersRouter.get('/', async (req, res) => {
       next({ name, message })
     } 
   });
+
+  usersRouter.delete('/:userId', requireUser, requireActiveUser, async (req, res, next) => {
+    try {
+      const user = await getUserById(req.params.userId);
+  
+      if (user) {
+        if (req.user && req.user.id === user.id) {
+          const updatedUser = await updateUser(user.id, { active: false });
+  
+          res.send({ user: updatedUser });
+        } else {
+          next({
+            name: 'UnauthorizedUserError',
+            message: 'You cannot delete a user that is not you'
+          });
+        }
+      } else {
+        next({
+          name: 'UserNotFoundError',
+          message: 'That user does not exist'
+        });
+      }
+  
+    } catch ({ name, message }) {
+      next({ name, message });
+    }
+  });
+
+  usersRouter.patch('/:userId', requireUser, async (req, res, next) => {
+    const { active } = req.body;
+  
+    try {
+      const user = await getUserById(req.params.userId);
+  
+      if (user && req.user.id === user.id) {
+        const updatedUser = await updateUser(user.id, { active });
+  
+        res.send({ user: updatedUser });
+      } else {
+        next({
+          name: 'UnauthorizedUserError',
+          message: 'You cannot update a user that is not you'
+        });
+      }
+  
+   
+    } catch ({ name, message }) {
+      next({ name, message });
+    }  });
 
 module.exports = usersRouter;
