@@ -3,7 +3,7 @@ const express = require('express');
 const usersRouter = express.Router();
 const { getAllUsers, getUserByUsername, createUser, getUserById, updateUser  } = require('../db');
 const jwt = require('jsonwebtoken');
-const bycrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 function requireActiveUser(req, res, next) {
