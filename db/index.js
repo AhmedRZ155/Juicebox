@@ -131,7 +131,7 @@ async function createPost({
     `, [authorId, title, content]);
 
     const tagList = await createTags(tags);
-
+    
     return await addTagsToPost(post.id, tagList);
   } catch (error) {
     throw error;
@@ -284,32 +284,33 @@ async function getPostsByTagName(tagName) {
 
 async function createTags(tagList) {
   if (tagList.length === 0) {
-    return [ ];
+    return [];
   }
-
-  const valuesStringInsert = tagList.map(
-    (_, index) => `$${index + 1}`
-  ).join(', ');
-
-  const valuesStringSelect = tagList.map(
-    (_, index) => `$${index + 1}`
-  ).join(', ');
-
+  const valuesStringInsert = tagList
+    .map((_, index) => `$${index + 1}`)
+    .join("), (");
+  const valuesStringSelect = tagList
+    .map((_, index) => `$${index + 1}`)
+    .join(", ");
   try {
     // insert all, ignoring duplicates
-    await client.query(`
+    await client.query(
+      `
       INSERT INTO tags(name)
-      VALUES (${ valuesStringInsert })
+      VALUES (${valuesStringInsert})
       ON CONFLICT (name) DO NOTHING;
-    `, tagList);
-
+    `,
+      tagList
+    );
     // grab all and return
-    const { rows } = await client.query(`
+    const { rows } = await client.query(
+      `
       SELECT * FROM tags
       WHERE name
-      IN (${ valuesStringSelect });
-    `, tagList);
-
+      IN (${valuesStringSelect});
+    `,
+      tagList
+    );
     return rows;
   } catch (error) {
     throw error;
