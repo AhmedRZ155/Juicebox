@@ -136,7 +136,6 @@ const {
   
   async function rebuildDB() {
     try {
-      client.connect();
   
       await dropTables();
       await createTables();
