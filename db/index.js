@@ -1,13 +1,13 @@
 const { Client } = require('pg') // imports the pg module
  
 
-const client = new Client({
+const client = new Client(process.env.NODE_ENV === "dev" ? {
   user: 'postgres',
   host: 'localhost',
   database: 'juicebox_dev',
   password: 'postgres',
   port: 5432,
-}
+}: process.env.DB_URL
 );
 
 client.connect(err => {
