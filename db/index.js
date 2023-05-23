@@ -10,6 +10,13 @@ const client = new Client(process.env.NODE_ENV === "dev" ? {
 }: process.env.DB_URL
 );
 
+
+client.connect(err => {
+  if (err) {
+    console.log(err);
+  }
+  console.log('Connected to the database');
+});
 /**
  * USER Methods
  */
@@ -348,12 +355,7 @@ async function getAllTags() {
   }
 }
 
-client.connect(err => {
-  if (err) {
-    console.log(err);
-  }
-  console.log('Connected to the database');
-});
+
 
 module.exports = {  
   client,
